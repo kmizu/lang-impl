@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="ja">
+
+	<head>
+		<meta charset="utf-8">
+
+    <title>言語処理系作成の基本</title>
+
+		<meta name="description" content="言語処理系の基本">
+		<meta name="author" content="Kota Mizushima">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+<style type='text/css'>     
+  .reveal h1,               
+  .reveal h2,               
+  .reveal h3,               
+  .reveal h4,               
+  .reveal h5,               
+  .reveal h6 {              
+    text-transform: none;   
+  }                         
+</style>                    
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+<div class='slides'>
+<section data-markdown data-separator='^\n---$'><script type='text/template'>
+
+## 言語処理系の基礎
+### プログラミング言語作成ハンズオン Vol.2
+### 2019/11/09（土）
+### Kota Mizushima
+
+---
+
+### Who am I?
+* Twitter ID: [@kmizu](https://twitter.com/kmizu)
+* GitHub: [kmizu](https://github.com/kmizu)
+* Love: Scala/Rust/Nemerle/...
+* Parsing algorithm enthuasiast
+
+***
+
+Scalaと構文解析アルゴリズムが大好きなプログラマです
+
+---
+
+## お願い
+
+* 参加者の数からの質問に対して、私の対応が追いつかない可能性があります
+* 場合によっては、参加者同士で教えあっていただけると助かります
+* 本ハンズオンのハッシュタグは `#lang_impl` です
+
+---
+
+## プログラミング言語とは
+
+ばっさり略
+
+---
+
+## プログラミング言語処理系とは
+
+* プログラミング言語で書かれたテキストを処理して何らかの動作を行うものの総称
+
+* プログラミング言語処理系の例：
+  * インタプリタ
+  * コンパイラ
+  * トランスレータ
+    * 最近はトランスパイラと呼ばれることも
+
+
+---
+
+## インタプリタ
+
+* プログラムを構文解析して得られた抽象構文木に対して
+  解釈・実行を行うプログラムの総称
+  * x 「プログラムを一行ずつ（機械語に）翻訳するプログラム」
+
+
+---
+
+## コンパイラ・トランスレータ
+
+* ある言語のプログラムを事前に他の言語のプログラムに変換するプログラム
+* 変換対象が機械語の場合：コンパイラ
+* 変換対象がまた別のプログラミング言語の場合：トランスレータ
+
+---
+
+## インタプリタの典型的な処理の流れ
+
+1. 字句解析
+1. 構文解析
+1. 意味解析
+1. 解釈・実行
+
+**
+
+* 今回は、構文解析までは説明のみ
+
+---
+
+## 字句解析
+
+* 入力プログラムを、最小の単位に分割する作業
+  * 最小の単位をトークンと呼ぶ
+* 字句解析を行うプログラムを字句解析器と呼ぶ
+* 例：
+
+```
+(100 + 200) * 300 / 400
+```
+から
+
+```
+[(] [100] [+] [200] [)] [*] [300] [/] [400]
+```
+
+へ（`[`はトークンを囲む記号として仮においたもの）
+
+---
+
+## 構文解析
+
+* (多くの場合）字句解析されたトークン列から
+  木構造（抽象構文木）を構築する作業
+* また、その際に、構文の誤りを発見する
+
+```
+[(] [100] [+] [200] [)] [*] [300] [/] [400]
+```
+
+から
+
+ 
+```
+           "/"
+         ／  ＼
+       "*"    400
+      ／ ＼
+    "+"   300
+   ／  ＼
+100     200
+
+```
+
+***
+
+* 括弧は構文解析の時に消える
+* できた木構造を抽象構文木と呼ぶ
+
+---
+
+## 意味解析
+
+* 抽象構文木に様々な解析を行う作業
+* 実際には
+
+  * ほとんど全く行われない
+  * いくつかの作業に分割される
+
+  ことが多い
+* 例：
+
+```
+let x = 1;
+println(x); // 未定義の変数を参照しようとした
+x = "X"; // 整数型の変数に文字列を代入しようとした
+```
+
+---
+
+## 解釈・実行
+
+* 抽象構文木をたどって実行する
+
+---
+
+## 注意
+
+* 今回説明したものはあくまで簡略化されたもの
+* 実際には：
+  * 意味解析は省略されることもある
+  * 中間コードが生成されることもある
+    * というか、それが主流
+  * 解釈は中間コードに対して行われることもある
+      * というか、それが主流
+  * コード生成の後に最適化が走ることもある
+    * JITコンパイラなど
+
+***
+
+* ここまででプログラミング言語処理系の基礎は終了
+* 次ページ以降は作成する言語nub2について
+
+---
+
+## プログラミング言語nub2
+
+* https://github.com/kmizu/nub2
+* 言語作成学習用の「小さな」言語
+  * nub: 英語で小さな塊や隆起を意味
+* 「式指向」の言語
+  * だいたいの構造が何らかの値を返す
+
+---
+
+## 整数リテラル
+
+```
+1
+5
+10
+100
+1000
+...
+```
+
+---
+
+## 四則演算式
+
+```
+1 + 2 // 3
+1 + 2 * 3 // 7
+(1 + 2) * 3 // 9
+(1 + 2) * 3 / 4 //2
+```
+
+---
+
+## 変数宣言・代入・呼出
+
+```
+let x = 1;
+let y = 2;
+print(x + y); //3
+x = 2;
+print(x + y); //4
+// let x = 1; is not allowed since x is already defined
+```
+
+---
+
+## 比較演算式
+
+```
+1 < 2
+3 < 4
+3 <= 3
+6 > 5
+7 > 5
+7 >= 7
+1 == 1
+5 == 5
+1 != 2
+3 != 2
+```
+
+***
+
+*  主に条件式で使う
+
+---
+
+## 出力
+
+```
+print(100);
+println(100);
+```
+
+***
+
+* 現状で整数にのみ対応
+* 他の型への対応は本日の課題の一つ
+
+---
+
+## 条件式
+
+```
+if(1 < 2) {
+  print(1);
+}else {
+  print(2);
+}
+```
+
+---
+
+## ループ式
+
+```
+let i = 0;
+while(i < 10) {
+  print(i);
+  i = i + 1;
+}
+```
+
+---
+
+## 関数宣言・呼出
+
+```
+def printRange(from, to) {
+  let i = from;
+  while(i <= to) {
+    println(i);
+    i += 1;
+  }
+}
+printRange(1, 10); // from 1 to 10 are printed
+```
+
+***
+
+* 高階関数を実装したい人は拡張してみてください
+
+---
+
+## 準備作業
+
+1. Java SE 8（AdoptOpenJDK 8）をインストール
+1. Apache Maven 3をインストール
+1. nub2をclone & compile
+
+```
+$ git clone https://github.com/kmizu/nub2.git
+$ cd nub2
+$ mvn compile
+```
+
+---
+
+## 練習課題：文字列をサポートしよう
+
+* 現状のnub2は値として整数しかサポートしていない
+* 文字列をサポートするにはコードをどう改変すればいいか
+ * 抽象構文木の定義をどうするか
+ * 抽象構文木の走査結果をどうするか
+
+---
+
+# 以降、実演
+
+</script></section>
+
+      </div>
+		</div>
+    
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
